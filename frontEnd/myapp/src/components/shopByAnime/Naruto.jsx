@@ -16,7 +16,6 @@ import { FaAngleDown, FaRegHeart } from 'react-icons/fa6';
 import { AiOutlineShoppingCart } from 'react-icons/ai';
 import { FaSearchPlus } from 'react-icons/fa';
 import axios from 'axios';
-import MyVerticallyCenteredModal from '../home/MyVerticallyCenteredModal';
 
 
 
@@ -34,6 +33,10 @@ const Naruto = () => {
     const [id, setId] = useState(null)
     const [modalShow, setModalShow] = React.useState(false);
     const [value,setValue] = useState([])
+    const [productTypeFilters, setProductTypeFilters] = useState([]);
+    const [priceRangeFilters, setPriceRangeFilters] = useState([]);
+    const [showModal, setShowModal] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState(null);
     // const [color,setColor] = useState('white')
 
     // const [products,setProducts] = useState([])
@@ -46,12 +49,31 @@ const Naruto = () => {
     // console.log("Products", products)
 
     // const [checkboxe1, setCheckboxe1] = useState(false)
-    const [checkboxe2, setCheckboxe2] = useState(false)
-    const [checkboxe3, setCheckboxe3] = useState(false)
-    const [checkboxe4, setCheckboxe4] = useState(false)
-    const [checkboxe5, setCheckboxe5] = useState(false)
-    const [checkboxe6, setCheckboxe6] = useState(false)
-    const [checkboxe7, setCheckboxe7] = useState(false)
+
+    const openModal = (item) => {
+        setShowModal(true);
+        setSelectedProduct(item)
+      };
+    
+      const closeModal = () => {
+        setShowModal(false);
+      };
+
+    const getNaruto = async () => {
+        try{
+            const anime = 'naruto'
+            const response = await axios.get(`http://localhost:5000/Users/getCategory/${anime}`)
+            console.log("Response",response.data)
+            setNaruto(response.data)
+        }
+        catch (err) {
+            console.log(err)
+        }
+    }
+
+    useEffect(() => {
+        getNaruto()
+    },[])
 
     useEffect(() => {
         fetchProducts()
@@ -66,74 +88,6 @@ const Naruto = () => {
         catch (err) {
             console.log(err)
         }
-    }
-
-
-
-    useEffect(() => {
-        handleNaruto()
-
-    }, [products])
-
-    const handleNaruto = async () => {
-        setNaruto(products.filter((data) => (data.anime === "Naruto")))
-
-        let priceArray = naruto.map((data) => data.price)
-        console.log("Price Array", priceArray)
-        // console.log(Math.max(null,priceArray))
-        // const maxPrice = priceArray.reduce((initialVal,CurVal) => Math.max(initialVal,CurVal), 0)
-        // console.log("maxPrice",maxPrice)
-        let maxPrice = Math.max(...priceArray)
-        console.log("MaxPrice", maxPrice)
-    }
-
-    const filterPrice = async (initial,final) => {
-        console.log("Initial",initial,final)
-        const result = products.filter((data) => data.anime === "Naruto" && data.price >= initial && data.price <= final)
-        setNaruto(result)
-    }
-
-    const filteredResults = async (filterItem) => {
-        const result = products.filter((data) => data.anime === "Naruto" && data.category === filterItem)
-        if(checkboxe2.checked === false){
-            handleNaruto()
-        }
-
-        if (filterItem === "t-shirt") {
-            // setCheckboxe1(true)
-        }
-        else if (filterItem === "hoodies") {
-            setCheckboxe2(true)
-        }
-        else if (filterItem === "jacket") {
-            setCheckboxe3(true)
-        }
-        else if (filterItem === "sweatshirt") {
-            setCheckboxe4(true)
-        }
-        else if (filterItem === "oversize") {
-            setCheckboxe5(true)
-        }
-        else if (filterItem === "tanktop") {
-            setCheckboxe6(true)
-        }
-        else if (filterItem === "combo") {
-            setCheckboxe7(true)
-        }
-        setNaruto(result)
-        setChckBx(false)
-    }
-
-    const clearAll = async () => {
-        setChckBx(true)
-        // setCheckboxe1(false)
-        setCheckboxe2(false)
-        setCheckboxe3(false)
-        setCheckboxe4(false)
-        setCheckboxe5(false)
-        setCheckboxe6(false)
-        setCheckboxe7(false)
-        handleNaruto()
     }
 
     const handleMouseEnter = (index) => {
@@ -165,7 +119,12 @@ const Naruto = () => {
                         image: prod.image,
                         qty: prod.qty,
                         size
-                    });
+                    },
+                    
+                    {headers : {
+                            'Authorization' : `Bearer ${token}`
+                        }}
+                    );
                     console.log("response", response);
                     setCart(response.data.user.cart);
                 }
@@ -174,14 +133,18 @@ const Naruto = () => {
                 nav('/Login');
             }
         } catch (err) {
-            if (err.response && err.response.data && err.response.data.message === "already added") {
+            if (err.response.status === 401) {
+                // Unauthorized - invalid token or token not provided
+                alert("Unauthorized - Please sign in again");
+                // Redirect to login page or perform any other action as needed
+                nav('/Login');
+            } else if (err.response && err.response.data && err.response.data.message === "already added") {
                 alert("Product already exists in cart");
             } else {
                 console.log(err, "Product id not found");
             }
-        }
     };
-
+    }
 
     // console.log("newcart", cart);
 
@@ -220,13 +183,53 @@ const Naruto = () => {
         }
     }
 
-    // const displayProduct = async (id) => {
-    //     nav(`/ProductDisplay/${id}`)
-    // }
+const filterProductType = (type) => {
+        if (productTypeFilters.includes(type)) {
+            setProductTypeFilters(productTypeFilters.filter(filterType => filterType !== type));
+        } else {
+            setProductTypeFilters([...productTypeFilters, type]);
+        }
+    };
 
-    // console.log("first,wishlist", wishlist)
+    const filterPriceRange = (initial, final) => {
+        if (priceRangeFilters.length === 2 && priceRangeFilters.includes(initial) && priceRangeFilters.includes(final)) {
+            setPriceRangeFilters([]);
+        } else {
+            // setPriceRangeFilters([initial, final]);
+            setPriceRangeFilters([...priceRangeFilters,initial,final])
+        }
+    };
 
+    const filteredProducts = naruto.filter(product => {
+        if (productTypeFilters.length > 0 && !productTypeFilters.includes(product.category)) {
+            return false;
+        }
+        if (priceRangeFilters.length === 2 && (product.price < priceRangeFilters[0] || product.price > priceRangeFilters[1])
+         && (!priceRangeFilters.includes(product.price)))  {
+            return false;
+        }
+        return true;
+    });
 
+    const clearAllFilters = () => {
+        setProductTypeFilters([]);
+        setPriceRangeFilters([]);
+    };
+    const increementQty = async (id) => {
+        // console.log("first",id)
+        try {
+            const newQty = 
+            selectedProduct._id === id ? { ...selectedProduct, qty: selectedProduct.qty + 1 } : selectedProduct
+            
+            setSelectedProduct(newQty)
+            axios.put(`http://localhost:5000/Users/cart/${id}`, { userID, cart: newQty })
+            console.log("Display",selectedProduct)
+            
+        }
+        catch (err) {
+            console.log(err)
+        }
+    }
     return (
         <div className="main1H">
 
@@ -312,45 +315,26 @@ const Naruto = () => {
                         <div className="categoryHead" style={{ display: 'flex', alignItems: 'left', justifyContent: 'left', marginTop: '10px' }}><p>CATEGORIES</p></div>
                         <div className="categoryHead1" style={{ display: 'flex', alignItems: 'left', justifyContent: 'left', marginTop: '20px' }}><p>PRODUCT TYPE</p></div>
                         <div className="productCategory">
-                            <div className='checkBoxDiv'><input type="checkbox"  onChange={() => filteredResults("t-shirt")} className='checkBox' /><label>T - Shirt</label></div>
-                            <div className='checkBoxDiv'><input type="checkbox" checked={checkboxe2} onChange={() => filteredResults("hoodies")} className='checkBox' /><label>Hoodies</label></div>
-                            <div className='checkBoxDiv'><input type="checkbox" checked={checkboxe3} onChange={() => filteredResults("jacket")} className='checkBox' /><label>Jacket</label></div>
-                            <div className='checkBoxDiv'><input type="checkbox" checked={checkboxe4} onChange={() => filteredResults("sweatshirt")} className='checkBox' /><label>Sweatshirt</label></div>
-                            <div className='checkBoxDiv'><input type="checkbox" checked={checkboxe5} onChange={() => filteredResults("oversize")} className='checkBox' /><label>Oversize</label></div>
-                            <div className='checkBoxDiv'><input type="checkbox" checked={checkboxe6} onChange={() => filteredResults("tanktop")} className='checkBox' /><label>Tank Top</label></div>
-                            <div className='checkBoxDiv'><input type="checkbox" checked={checkboxe7} onChange={() => filteredResults("combo")} className='checkBox' /><label>Combo</label></div>
+                            <div className='checkBoxDiv'><input type="checkbox"  onChange={() => filterProductType("t-shirt")} className='checkBox' /><label>T - Shirt</label></div>
+                            <div className='checkBoxDiv'><input type="checkbox"  onChange={() => filterProductType("hoodies")} className='checkBox' /><label>Hoodies</label></div>
+                            <div className='checkBoxDiv'><input type="checkbox"  onChange={() => filterProductType("jacket")} className='checkBox' /><label>Jacket</label></div>
+                            <div className='checkBoxDiv'><input type="checkbox"  onChange={() => filterProductType("sweatshirt")} className='checkBox' /><label>Sweatshirt</label></div>
+                            <div className='checkBoxDiv'><input type="checkbox"  onChange={() => filterProductType("oversize")} className='checkBox' /><label>Oversize</label></div>
+                            <div className='checkBoxDiv'><input type="checkbox"  onChange={() => filterProductType("tanktop")} className='checkBox' /><label>Tank Top</label></div>
+                            <div className='checkBoxDiv'><input type="checkbox"  onChange={() => filterProductType("combo")} className='checkBox' /><label>Combo</label></div>
                         </div>
 
                         <div className='priceCategory'>
-                        {/* <div className="categoryHead1" style={{ display: 'flex', alignItems: 'left', justifyContent: 'left', marginTop: '30px' }}><p>PRICE</p></div> */}
-                            {/* <div>
-                            <ReactSlider
-    className="horizontal-slider" 
-    thumbClassName="example-thumb"
-    trackClassName="example-track"
-    defaultValue={[0, 2999]}
-    // ariaLabel={['Lower thumb', 'Upper thumb']}
-                                max={2999}
-                                min={0}
-    ariaValuetext={state => `Thumb value ${state.valueNow}`}
-    renderThumb={(props, state) => <div {...props}>{state.valueNow}</div>}
-    onChange={(value, index) => setValue(value)}
-    pearling
-    minDistance={10}
-/>
-                            <div style={{display:'flex',flexDirection:'row',justifyContent:'space-between',width:'100%'}}> <p style={{fontSize:'14px'}}>{value[0]}₹</p>
-                       <p style={{fontSize:'14px'}}>{value[1]}₹</p>
-                        </div>
-                        </div> */}
+                        
                             <div className="categoryHead1" style={{ display: 'flex', alignItems: 'left', justifyContent: 'left', marginTop: '30px' }}><p>PRICE</p></div>
-                        <div className='checkBoxDiv'><input type="checkbox" onChange={()=>filterPrice(0,250)} className='checkBox' /><label className='lbl'>0 - 250</label></div>
-                        <div className='checkBoxDiv'><input type="checkbox" onChange={()=>filterPrice(250,500)}  className='checkBox' /><label className='lbl'>250 - 500</label></div>
-                        <div className='checkBoxDiv'><input type="checkbox" onChange={()=>filterPrice(500,750)} className='checkBox' /><label className='lbl'>500 - 750</label></div>
-                        <div className='checkBoxDiv'><input type="checkbox" onChange={()=>filterPrice(750,1000)} className='checkBox' /><label className='lbl'>750 - 1000</label></div>
-                        <div className='checkBoxDiv'><input type="checkbox" onChange={()=>filterPrice(1000,1250)} className='checkBox' /><label className='lbl'>1000 - 1250</label></div>
-                        <div className='checkBoxDiv'><input type="checkbox" onChange={()=>filterPrice(1250,1500)} className='checkBox' /><label className='lbl'>1250 - 1500</label></div>
-                        <div className='checkBoxDiv'><input type="checkbox" onChange={()=>filterPrice(1500,1750)} className='checkBox' /><label className='lbl'>1500 - 1750</label></div>
-                        {/* <div className='checkBoxDiv'><input type="checkbox" onChange={()=>filterPrice(1750,2000)} className='checkBox' /><label className='lbl'>1750 - 2000</label></div> */}
+                        <div className='checkBoxDiv'><input type="checkbox" onChange={()=>filterPriceRange(0,250)} className='checkBox' /><label className='lbl'>0 - 250</label></div>
+                        <div className='checkBoxDiv'><input type="checkbox" onChange={()=>filterPriceRange(250,500)}  className='checkBox' /><label className='lbl'>250 - 500</label></div>
+                        <div className='checkBoxDiv'><input type="checkbox" onChange={()=>filterPriceRange(500,750)} className='checkBox' /><label className='lbl'>500 - 750</label></div>
+                        <div className='checkBoxDiv'><input type="checkbox" onChange={()=>filterPriceRange(750,1000)} className='checkBox' /><label className='lbl'>750 - 1000</label></div>
+                        <div className='checkBoxDiv'><input type="checkbox" onChange={()=>filterPriceRange(1000,1250)} className='checkBox' /><label className='lbl'>1000 - 1250</label></div>
+                        <div className='checkBoxDiv'><input type="checkbox" onChange={()=>filterPriceRange(1250,1500)} className='checkBox' /><label className='lbl'>1250 - 1500</label></div>
+                        <div className='checkBoxDiv'><input type="checkbox" onChange={()=>filterPriceRange(1500,1750)} className='checkBox' /><label className='lbl'>1500 - 1750</label></div>
+                        {/* <div className='checkBoxDiv'><input type="checkbox" onChange={()=>filterPriceRange(1750,2000)} className='checkBox' /><label className='lbl'>1750 - 2000</label></div> */}
                         </div>
                         {/* <div className="categoryHead1" style={{ display: 'flex', alignItems: 'left', justifyContent: 'left', marginTop: '30px' }}><p>SIZE</p></div> */}
 
@@ -359,11 +343,11 @@ const Naruto = () => {
 
                     <div className="productsRight">
                         {
-                            chckBx === false ? <div style={{ display: 'flex', justifyContent: 'left', width: '100%' }}>
-                                <button style={{ border: 'none', backgroundColor: 'black', color: 'white', fontSize: '12px', height: '25px' }} onClick={clearAll}>Clear all</button></div> : false
+                            productTypeFilters.length !== 0 || priceRangeFilters.length !== 0 ? <div style={{ display: 'flex', justifyContent: 'left', width: '100%' }}>
+                                <button style={{ border: 'none', backgroundColor: 'black', color: 'white', fontSize: '12px', height: '25px' }} onClick={clearAllFilters}>Clear all</button></div> : false
                         }
                         {
-                            naruto.map((item, cardIndex) => (
+                            filteredProducts.map((item, cardIndex) => (
                                 <div>
                                     {
                                         item._id === id ? (
@@ -447,12 +431,7 @@ const Naruto = () => {
                                                                 /></Link>
 
                                                             </div>
-                                                            <div className='slideIconsI'><Link><FaSearchPlus className='iconsI'
-                                                                onClick={() => setModalShow(true)}
-                                                            />
-                                                                <MyVerticallyCenteredModal
-                                                                    show={modalShow}
-                                                                    onHide={() => setModalShow(false)}
+                                                            <div className='slideIconsI'><Link><FaSearchPlus onClick={() => openModal(item)}  className='iconsI'
                                                                 />
                                                             </Link>
 
@@ -522,6 +501,91 @@ const Naruto = () => {
                 <div className='footBottom1H'><p style={{ fontSize: '13px', fontFamily: 'Poppins,sans-serif', color: 'white' }}>© 2024 ZORO All Rights Responseerved.</p></div>
 
             </div>
+            {showModal && (
+        <div className="modal1">
+          <div className="modal-content1">
+            {/* <span className="close" onClick={closeModal}>
+              &times;
+            </span> */}
+            <div className='maindiv'>
+                <div className="leftdiv">
+                <div style={{display:'flex',justifyContent:'center',alignItems:'center',flexDirection:'column'}}>
+                    <img style={{margin:'10px'}} src={selectedProduct.image} height={340} width={310} alt="" />
+                    <Button variant='danger' onClick={()=>nav(`/ProductDisplay/${selectedProduct._id}`)} style={{width:'310px',height:'30px',marginBottom:'20px',display:'flex',justifyContent:'center',alignItems:'center',border:'none'}}>View Product Details</Button>
+                </div>
+                </div>
+                <div className="rightdiv">
+                    <div><p style={{fontSize:'18px',fontWeight:'bold'}}>{selectedProduct.name}</p></div>
+                    <div><p style={{fontSize:'20px',fontWeight:'bold'}}>Rs. {selectedProduct.price}.00</p></div>
+                    <div><p style={{fontSize:'14px'}}>{selectedProduct.description}</p></div>
+
+                    <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'left', alignItems: 'left' }}><p style={{fontSize:'14px'}}>SIZE : </p> <p style={{ fontSize: '14px', marginTop: '0px',marginLeft:'5px' }}> {size}</p></div>
+                                                    <div>
+                                                        <button
+                                                            className="BtnProd"
+                                                            onClick={() => setSize('S')}
+                                                            style={{ backgroundColor: size === 'S' ? 'orange' : 'red' }}
+                                                        >
+                                                            S
+                                                        </button>
+                                                        <button
+                                                            className="BtnProd"
+                                                            onClick={() => setSize('M')}
+                                                            style={{ marginLeft: '20px', backgroundColor: size === 'M' ? 'orange' : 'red' }}
+                                                        >
+                                                            M
+                                                        </button>
+                                                        <button
+                                                            className="BtnProd"
+                                                            onClick={() => setSize('X')}
+                                                            style={{ marginLeft: '20px', backgroundColor: size === 'X' ? 'orange' : 'red' }}
+                                                        >
+                                                            X
+                                                        </button>
+                                                        <button
+                                                            className="BtnProd"
+                                                            onClick={() => setSize('XL')}
+                                                            style={{ marginLeft: '20px', backgroundColor: size === 'XL' ? 'orange' : 'red' }}
+                                                        >
+                                                            XL
+                                                        </button>
+                                                        <button
+                                                            className="BtnProd"
+                                                            onClick={() => setSize('XXL')}
+                                                            style={{ marginLeft: '20px', backgroundColor: size === 'XXL' ? 'orange' : 'red' }}
+                                                        >
+                                                            XXL
+                                                        </button>
+                                                    </div>
+
+                                                    <div style={{ display: 'flex', flexDirection: 'row' }}><div style={{ height: '40px', width: '90px', border: '1px solid', display: 'flex', flexDirection: 'row', alignItems: 'center',marginTop:'30px' }}>
+                                    <button style={{ height: '34px', width: '30px', background: 'white', borderColor: 'white', fontSize: '20px', border: 'white' }}>-</button>
+                                    <div style={{ height: '35px', width: '30px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>{selectedProduct.qty}</div>
+                                    <button style={{ height: '34px', width: '30px', background: 'white', borderColor: 'white', fontSize: '20px', border: 'white' }}  onClick={() => selectedProduct.qty < 8 ? increementQty(selectedProduct._id) :selectedProduct}>+</button>
+                                </div>
+                                    <Button onClick={() => addToCart(selectedProduct, selectedProduct._id,selectedProduct.size)}
+                                        style={{ marginLeft: '10px',marginTop:'30px' 
+                                        //  backgroundColor: cart.find(item => item.id === selectedProduct._id && item.size === selectedProduct.size) ? 'green' : 'black'
+                                          }} variant='dark' className="acard-button1" >
+
+                                        {/* {cart.find(item => item.id === selectedProduct._id) ? "ADDED" : "ADD TO CART"} */}
+
+                                        ADD TO CART
+                                    </Button></div>
+
+                                    <div style={{ marginTop: '30px', display: 'flex', flexDirection: 'row' }}>
+                                <Link style={{ color: 'black', display: 'flex', flexDirection: 'row' }}><FaRegHeart
+                                    onClick={() => addToWishlist(selectedProduct, selectedProduct._id)}
+                                    style={{ marginTop: '2px', color: wishlist.some(item => item.id === selectedProduct._id) ? 'red' : 'black' }} className='iconsIP' />
+                                    <p onClick={() => addToWishlist(selectedProduct, selectedProduct._id)} style={{ marginLeft: '5px' }}>Available in wishlist</p></Link>
+                            </div>
+                    
+                </div>
+            </div>
+            <Button variant='secondary' style={{width:'100%'}} onClick={closeModal}>Close</Button>
+          </div>
+        </div>
+      )}
         </div>
     );
 };

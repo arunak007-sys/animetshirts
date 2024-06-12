@@ -27,8 +27,13 @@ const userSchema = new mongoose.Schema({
         {
             type : Array,
             required : false,
+        },
+        address : [],
+        myOrders : [],
+        bannedUser : {
+            type : Boolean,
+            required : false,
         }
-    
 })
 
 const User = mongoose.model('User',userSchema)

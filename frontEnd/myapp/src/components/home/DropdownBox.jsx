@@ -1,8 +1,19 @@
-import { Link } from "react-router-dom";
+import { useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { myContext } from "../context/Context";
 
  const DropdownBox = () => {
     // Content of your dropdown box
+    const nav = useNavigate()
+    const { products } = useContext(myContext)
+    const anime=[...new Set(products.map(data=>data.anime))]
+    // function handleSelect(e){
+    //     const query=e.target.value
+    //     const query1=query.split(" ").join("_")
+    //     nav(`/Products/${query1}`)
+    // }
     return (
+
         <div className="dropdown-box"
             style={{
                 position: 'absolute',
@@ -23,17 +34,17 @@ import { Link } from "react-router-dom";
             }}
         >
             <div className="leftDropDwon"
-                style={{ height: '100%', width: '50%', display: 'flex', flexDirection: 'column', justifyContent: 'left', paddingLeft: '10px', backgroundColor: 'black' }}>
-                <Link className='linksNH'>NARUTO</Link>
-                <Link className='linksNH'>ONE PIECE</Link>
-                <Link className='linksNH'>JUJUSTU KAISEN</Link>
-                <Link className='linksNH'>TOKYO REVENGERS</Link>
+                style={{ height: '100%', width: '50%', display: 'flex', flexDirection: 'column', justifyContent: 'left', paddingLeft: '20px', backgroundColor: 'black' }}>
+                <Link className='linksNH' to={(`/Products/${anime[0]}`)}>NARUTO</Link>
+                <Link className='linksNH' to={(`/Products/${anime[4]}`)}>ONE PIECE</Link>
+                <Link className='linksNH' to={(`/Products/${anime[2]}`)}>JUJUSTU KAISEN</Link>
+                <Link className='linksNH' to={(`/Products/${anime[3]}`)}>TOKYO REVENGERS</Link>
             </div>
             <div className="rightDropDown"
                 style={{ height: '100%', width: '50%', display: 'flex', flexDirection: 'column', justifyContent: 'left', paddingLeft: '10px', backgroundColor: 'black' }}>
-                <Link className='linksNH'>DRAGON BALL</Link>
-                <Link className='linksNH'>ATTACK ON TITAN</Link>
-                <Link className='linksNH'>DEMON SLAYER</Link>
+                <Link className='linksNH' to={(`/Products/${anime[5]}`)}>DRAGON BALL</Link>
+                <Link className='linksNH' to={(`/Products/${anime[6]}`)}>ATTACK ON TITAN</Link>
+                <Link className='linksNH' to={(`/Products/${anime[1]}`)}>DEMON SLAYER</Link>
             </div>
 
         </div>

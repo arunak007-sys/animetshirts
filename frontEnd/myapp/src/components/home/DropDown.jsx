@@ -7,7 +7,7 @@ import { myContext } from '../context/Context';
 
 function DropDown() {
   const nav = useNavigate()
-  const {setLoginEmail,setCart,setWishlist} = useContext(myContext)
+  const {setLoginEmail,setCart,setWishlist,setMyOrders} = useContext(myContext)
   const token = localStorage.getItem('AuthToken')
     // console.log("AuthToken",token)
     const gmail = localStorage.getItem('loginEmail')
@@ -18,7 +18,17 @@ function DropDown() {
       localStorage.removeItem("authToken")
       setWishlist('')
       setCart('')
+      setMyOrders('')
       nav('/Login')
+    }
+
+    function checkOrder () {
+      if(token){
+        nav('/MyProfile')
+      }
+      else{
+        nav('/Login')
+      }
     }
   return (
     <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end' }}>
@@ -37,11 +47,11 @@ function DropDown() {
             border:'1px thick',
           }}
         >
-          <Dropdown.Item>My Account</Dropdown.Item>
+          <Dropdown.Item onClick={checkOrder}>My Account</Dropdown.Item>
           <hr style={{ marginLeft: '20px', marginRight: '20px' }} />
-          <Dropdown.Item>Wishlist</Dropdown.Item>
+          <Dropdown.Item onClick={()=>nav('/Wishlist')}>Wishlist</Dropdown.Item>
           <hr style={{ marginLeft: '20px', marginRight: '20px' }} />
-          <Dropdown.Item>Check Order</Dropdown.Item>
+          <Dropdown.Item onClick={()=>nav('/MyOrders')}>Check Order</Dropdown.Item>
           <Dropdown.Item>
             <div style={{ display: 'flex', flexDirection: 'column',marginTop:'15px' }}>
               {

@@ -1,7 +1,7 @@
 import React, { useContext,  useEffect,  useState } from 'react';
 import { Navbar, Nav, Image, Card } from 'react-bootstrap';
 import { IoCartOutline } from 'react-icons/io5';
-import '../home/HomeCopy.css';
+import '../home/home.css';
 import TwoHeadingsSlide from '../home/TwoHeadingsSlide';
 import { myContext } from '../context/Context';
 import PopOverSearchButton from '../home/PopoverSearchButton';

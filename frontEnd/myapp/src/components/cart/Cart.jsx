@@ -16,7 +16,7 @@ import { GiShoppingCart } from "react-icons/gi";
 import axios from 'axios';
 
 const Cart = () => {
-    const { cart, setCart, products, qty, setQty } = useContext(myContext)
+    const { cart, setCart, products, qty, setQty,setProducts } = useContext(myContext)
     const heading1 = 'NOW ENJOY ALL INDIA FREE SHIPPING ON EVERY ORDER'; // First heading text
     const heading2 = 'EXTRA 5% DISCOUNT FOR ALL ONLINE PAYMENTS'; // Second heading text
     const interval = 3000; // Interval between heading changes (in milliseconds)
@@ -43,7 +43,7 @@ const Cart = () => {
 
 
 
-    const removeCart = async (id,size) => {
+    const removeCart = async (id,size,qt) => {
         try {
             const isProductInCart = cart.find(item => item._id === id && item.size === size);
             if(isProductInCart){
@@ -51,6 +51,30 @@ const Cart = () => {
             }
             else {
                 const response = await axios.put(`http://localhost:5000/Users/deleteCart/${id}`, { userID,size });
+                 // Find the specific product within the products array
+            const updatedProducts = products.map((item) => {
+                if (item._id === id) {
+                    // Check if the product size matches the specified size
+                    if (item.stock && item.stock[size] > 0) {
+                        const updatedStock = { ...item.stock }; // Create a copy of the stock object
+                        // cart.map(data => data._id === item.id && data.size === size ? 
+                        updatedStock[size] = Math.max(0, updatedStock[size] + qt) // Decrement the stock for the specified size, ensuring it doesn't go below zero
+                        // : data)
+                        return {
+                            ...item,
+                            stock: updatedStock,
+                        };
+                    
+                    }
+                }
+                return item; // Return unchanged if it's not the product or size we're updating
+            });
+    
+            // Update product stock in the database
+            await axios.put(`http://localhost:5000/Product/updateStock/${id}`, { products: updatedProducts });
+    
+            // Update local products state after successful stock decrement
+            setProducts(updatedProducts);
             }
             
             console.log("first", id, userID);
@@ -71,63 +95,117 @@ const Cart = () => {
     const token = localStorage.getItem('AuthToken')
     console.log("AuthToken", token)
     const emailCheck = localStorage.getItem("userEmail")
-    // useEffect(() => {
 
+   
+    const increementQty = async (id,sizee) => {
+        try {   
+            const updatedProducts = products.map((item) => {
+                if (item._id === id) {
+                    // Check if the product size matches the specified size
+                    if (item.stock && item.stock[sizee] > 1) {
 
-    //     increementQty()
-    // }, [qty])
-
-    // const increementQty = async (id) => {
-    //     try {
-    //         await axios.patch(`http://localhost:5000/Users/cart/${id}`, { userID })
-
-    //     }
-    //     catch (err) {
-    //         console.log(err)
-    //     }
-    // }
-
-    const increementQty = async (id) => {
-        try {
-
-            // cart.map((data) => {
-            //     if(data.qty > 7){
-            //         alert("Quantity exceeded")
-            // }
-            // else {
-                
                 const newQty = cart.map((item) =>
 
-                item.id === id ? { ...item, qty: item.qty + 1 } : item
+                item.id === id && item.size === sizee ? { ...item, qty: item.qty + 1 } : item
             )
             setCart(newQty)
 
              axios.put(`http://localhost:5000/Users/cart/${id}`, { userID, cart: newQty })
             console.log("cart", cart)
-
-        //     }
-        // })
+                // Decrement product stock for the corresponding size
+            stockDecreement(id, sizee);
+        }
+        else{
+            alert("out of stock")
+        }
+    }
+    })
         }
         catch (err) {
             console.log(err)
         }
     }
 
-    const decreementQty = async (id) => {
+    const stockDecreement = async (id, size) => {
+        try {
+            // Find the specific product within the products array
+            const updatedProducts = products.map((item) => {
+                if (item._id === id) {
+                    // Check if the product size matches the specified size
+                    if (item.stock && item.stock[size] > 0) {
+                        const updatedStock = { ...item.stock }; // Create a copy of the stock object
+                        updatedStock[size] = Math.max(0, updatedStock[size] - item.qty); // Decrement the stock for the specified size, ensuring it doesn't go below zero
+    
+                        return {
+                            ...item,
+                            stock: updatedStock,
+                        };
+                    }
+                }
+                return item; // Return unchanged if it's not the product or size we're updating
+            });
+    
+            // Update product stock in the database
+            await axios.put(`http://localhost:5000/Product/updateStock/${id}`, { products: updatedProducts });
+    
+            // Update local products state after successful stock decrement
+            setProducts(updatedProducts);
+            console.log("updatedProducts", updatedProducts);
+        } catch (error) {
+            console.log('Error decrementing stock:', error);
+        }
+    };
+    
+    
+    
+    const category=[...new Set(products.map(data=>data.category))]
+
+    const decreementQty = async (id,sizee) => {
         try {
             const newQty = cart.map((item) =>
 
-                item.id === id ? { ...item, qty: item.qty - 1 } : item
+                item.id === id && item.size === sizee? { ...item, qty: item.qty - 1 } : item
             )
             setCart(newQty)
 
             await axios.put(`http://localhost:5000/Users/cart/${id}`, { userID, cart: newQty })
             console.log("cart", cart)
+            await stockIncreement(id, sizee);
         }
         catch (err) {
             console.log(err)
         }
     }
+
+    const stockIncreement = async (id, size) => {
+        try {
+            // Find the specific product within the products array
+            const updatedProducts = products.map((item) => {
+                if (item._id === id) {
+                    // Check if the product size matches the specified size
+                    if (item.stock && item.stock[size] > 0) {
+                        const updatedStock = { ...item.stock }; // Create a copy of the stock object
+                        updatedStock[size] = Math.max(0, updatedStock[size] + item.qty); // Decrement the stock for the specified size, ensuring it doesn't go below zero
+    
+                        return {
+                            ...item,
+                            stock: updatedStock,
+                        };
+                    }
+                }
+                return item; // Return unchanged if it's not the product or size we're updating
+            });
+    
+            // Update product stock in the database
+            await axios.put(`http://localhost:5000/Product/updateStock/${id}`, { products: updatedProducts });
+    
+            // Update local products state after successful stock decrement
+            setProducts(updatedProducts);
+            console.log("updatedProducts", updatedProducts);
+        } catch (error) {
+            console.log('Error decrementing stock:', error);
+        }
+    };
 
     return (
         <div className="main1H">
@@ -141,7 +219,8 @@ const Cart = () => {
                 <div className="header02H">
                     <div className="headerLeft1H">
                         <div style={{ fontSize: '16px', paddingLeft: '100px' }} >
-                            <img src={myVideo} alt='ZORO' height={65} width={65} />
+                            <Link to={('/')}><img src={myVideo} alt='ZORO' height={65} width={65} /></Link>
+
                         </div>
                         <Navbar expand="lg" variant="dark" style={{ width: '100%', height: '100%' }}>
                             <Navbar.Toggle aria-controls="basic-navbar-nav" />
@@ -169,8 +248,8 @@ const Cart = () => {
                                         {isShopByAnimeHovered && <DropdownBox onMouseEnter={() => setIsShopByAnimeHovered(true)} onMouseLeave={() => setIsShopByAnimeHovered(false)} />} {/* Render dropdown if hovered */}
                                     </Nav.Link>
 
-                                    <Nav.Link><p className="headerTitles1H">COMBO</p></Nav.Link>
-                                    <Nav.Link><p className="headerTitles1H">NEW LAUNCH</p></Nav.Link>
+                                    <Nav.Link onClick={()=>nav(`/ProductsDisplay/${category[3]}`)}><p className="headerTitles1H">COMBO</p></Nav.Link>
+                                    <Nav.Link onClick={()=>nav('/NewLaunch')}><p className="headerTitles1H">NEW LAUNCH</p></Nav.Link>
                                 </Nav>
                             </Navbar.Collapse>
                         </Navbar>
@@ -183,8 +262,8 @@ const Cart = () => {
                                 <Nav className="mr-auto" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "5px" }}
                                 >
                                     <PopOverSearchButton />
-                                    <Nav.Link><IoMdHeartEmpty className="headerRightIcons1H" /></Nav.Link>
-                                    <Nav.Link><IoCartOutline className="headerRightIcons1H" /></Nav.Link>
+                                    <Nav.Link onClick={()=>nav('/Wishlist')}><IoMdHeartEmpty className="headerRightIcons1H" /></Nav.Link>
+                                    <Nav.Link onClick={()=>nav('/cart/:productId')}><IoCartOutline className="headerRightIcons1H" /></Nav.Link>
                                     <DropDown />
                                 </Nav>
                             </Navbar.Collapse>
@@ -247,16 +326,16 @@ const Cart = () => {
                                                         <Link to={(`/ProductDisplay/${data.id}`)}><img src={data.image} alt="" style={{ height: '260px', width: '100%' }} /></Link>
                                                         </div>
                                                         <div className="card1a-rightAddToCart">
-                                                            <div className="removeButtonAddToCart"><Link style={{ textDecoration: 'none' }} onClick={() => removeCart(data.id,data.size)}><p style={{ fontSize: '16px', color: 'grey', letterSpacing: '1px' }}>REMOVE</p></Link></div>
+                                                            <div className="removeButtonAddToCart"><Link style={{ textDecoration: 'none' }} onClick={() => removeCart(data.id,data.size,data.qty)}><p style={{ fontSize: '16px', color: 'grey', letterSpacing: '1px' }}>REMOVE</p></Link></div>
                                                             <div className="data11AddToCart"><h2 style={{ fontSize: '20px' }}>{data.name}</h2></div>
                                                             <div className="data11AddToCart"><h2 style={{ fontSize: '20px',display:'flex',flexDirection:'row',justifyContent:'center',alignItems:'center' }}><p>size: </p> <p style={{fontSize:'14px',marginTop:'5px'}}> {data.size}</p></h2></div>
                                                             <div className="data12AddToCart"><h2 style={{ fontSize: '20px' }}>Rs. {data.price * data.qty}.00</h2></div>
 
                                                             {/* <CartDropDown  quantity={data.quantity} onQuantityChange={(newQuantity) => handleQuantityChange(index, newQuantity)} /> */}
                                                             <div className="dropDwonQuantity" style={{ display: 'flex', flexDirection: 'row', marginBottom: '60px' }}>
-                                                                <button style={{ border: 'none' }} onClick={() => data.qty > 1 ? decreementQty(data.id) : data}>-</button> &nbsp;
+                                                                <button style={{ border: 'none' }} onClick={() => data.qty > 1 ? decreementQty(data.id,data.size) : data}>-</button> &nbsp;
                                                                 <button style={{ borderRadius: '20px', height: '30px', width: '30px' }} >{data.qty}</button>&nbsp;
-                                                                <button style={{ border: 'none' }} onClick={() => data.qty < 8 ? increementQty(data.id) :data}>+</button></div>
+                                                                <button style={{ border: 'none' }} onClick={() => data.qty < 8 ? increementQty(data.id,data.size) :data}>+</button></div>
 
                                                         </div>
 
@@ -313,9 +392,9 @@ const Cart = () => {
             <div style={{ height: '100%', width: '100%' }}>
                 <Image height="100%" width="100%" src='https://otakukulture.in/wp-content/uploads/2023/09/Footer_HD_-e1674635998929.png'></Image>
             </div>
-            <div className="footer1H" >
+            <div className="footer1H"  style={{paddingTop:'100px'}} >
 
-                <div className="footer1aH">
+                <div className="footer1aH"style={{backgroundColor:'black'}}>
                     <div className="leftFooter1H">
                         <div><h4 class="h4" style={{ fontWeight: 'bold', marginLeft: '30px' }}>LOCATION</h4></div>
 

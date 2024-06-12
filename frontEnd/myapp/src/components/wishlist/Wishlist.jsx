@@ -16,7 +16,7 @@ import { GiShoppingCart } from 'react-icons/gi';
 import axios from 'axios';
 
 const Wishlist = () => {
-    const { wishlist,setWishlist } = useContext(myContext)
+    const { wishlist,setWishlist,products } = useContext(myContext)
     const heading1 = 'NOW ENJOY ALL INDIA FREE SHIPPING ON EVERY ORDER'; // First heading text
     const heading2 = 'EXTRA 5% DISCOUNT FOR ALL ONLINE PAYMENTS'; // Second heading text
     const interval = 3000; // Interval between heading changes (in milliseconds)
@@ -51,6 +51,7 @@ const Wishlist = () => {
     const displayProduct = async (id) => {
         nav(`/product/${id}`)
     }
+    const category=[...new Set(products.map(data=>data.category))]
     return (
         <div className="main1H">
 
@@ -63,7 +64,7 @@ const Wishlist = () => {
                 <div className="header02H">
                     <div className="headerLeft1H">
                         <div style={{ fontSize: '16px', paddingLeft: '100px' }} >
-                        <img src={myVideo} alt='ZORO' height={65} width={65} />
+                        <Link to={('/')}><img src={myVideo} alt='ZORO' height={65} width={65} /></Link>
                         </div>
                         <Navbar expand="lg" variant="dark" style={{ width: '100%', height: '100%' }}>
                             <Navbar.Toggle aria-controls="basic-navbar-nav" />
@@ -90,8 +91,8 @@ const Wishlist = () => {
                                         {isShopByAnimeHovered && <DropdownBox onMouseEnter={() => setIsShopByAnimeHovered(true)} onMouseLeave={() => setIsShopByAnimeHovered(false)} />} {/* Render dropdown if hovered */}
                                     </Nav.Link>
 
-                                    <Nav.Link><p className="headerTitles1H">COMBO</p></Nav.Link>
-                                    <Nav.Link><p className="headerTitles1H">NEW LAUNCH</p></Nav.Link>
+                                    <Nav.Link onClick={()=>nav(`/ProductsDisplay/${category[3]}`)}><p className="headerTitles1H">COMBO</p></Nav.Link>
+                                    <Nav.Link onClick={()=>nav('/NewLaunch')}><p className="headerTitles1H">NEW LAUNCH</p></Nav.Link>
                                 </Nav>
                             </Navbar.Collapse>
                         </Navbar>
@@ -104,8 +105,8 @@ const Wishlist = () => {
                                 <Nav className="mr-auto" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "5px" }}
                                 >
                                     <PopOverSearchButton />
-                                    <Nav.Link><IoMdHeartEmpty className="headerRightIcons1H" /></Nav.Link>
-                                    <Nav.Link><IoCartOutline className="headerRightIcons1H" /></Nav.Link>
+                                    <Nav.Link onClick={()=>nav('/Wishlist')}><IoMdHeartEmpty className="headerRightIcons1H" /></Nav.Link>
+                                    <Nav.Link onClick={()=>nav('/cart/:productId')}><IoCartOutline className="headerRightIcons1H" /></Nav.Link>
                                     <DropDown/>
                                 </Nav>
                             </Navbar.Collapse>
@@ -168,9 +169,9 @@ const Wishlist = () => {
             <div style={{height:'100%',width:'100%'}}>
                     <Image height="100%" width="100%" src='https://otakukulture.in/wp-content/uploads/2023/09/Footer_HD_-e1674635998929.png'></Image> 
             </div>
-            <div className="footer1H">
+            <div className="footer1H"  style={{paddingTop:'100px'}}>
 
-                <div className="footer1aH">
+                <div className="footer1aH" style={{backgroundColor:'black'}}>
                     <div className="leftFooter1H">
                         <div><h4 class="h4" style={{ fontWeight: 'bold', marginLeft: '30px' }}>LOCATION</h4></div>
 

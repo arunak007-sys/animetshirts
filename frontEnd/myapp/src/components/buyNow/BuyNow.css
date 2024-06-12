@@ -243,9 +243,9 @@ body {
     border-style: groove;
     justify-content: center;
 }
-.removeButtonAddToCartB{
+.removeButtonAddToCartB1{
     margin-left: 460px;
-    margin-bottom: 90px;
+    margin-bottom: 50px;
 }
 
 .data12AddToCart{
@@ -285,8 +285,14 @@ body {
 .amain-card2aAddToCart-button button{
     width: 100%;
 }
-.centerBuyNow{
+.centerBuyNow1{
     height: 100px;
+    width: 800px;
+    border: 1px solid;
+    margin-left: 30px;
+}
+.centerBuyNow2{
+    height: 100%;
     width: 800px;
     border: 1px solid;
     margin-left: 30px;

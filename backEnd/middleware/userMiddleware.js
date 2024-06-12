@@ -8,16 +8,19 @@ const userMiddleware = (req,res,next) => {
     if(!token){
         return res.status(401).json({message : 'Unauthorized - No token provided' })
     }
-}
+
 
 try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
+    const authtoken=token.split(" ")[1]
+    const decoded = jwt.verify(authtoken, process.env.JWT_SECRET, {
         ignoreExpiration: true,
     })
+    next()
 }
 catch (err){
     console.log('Error in userMiddleware : ', err)
-    ress.status(401).json({ message : 'Unauthorized - Invalid token'})
+    res.status(401).json({ message : 'Unauthorized - Invalid token'})
+}
 }
 
 module.exports = userMiddleware;

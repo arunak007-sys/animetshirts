@@ -19,6 +19,7 @@ import { FaAngleDown } from 'react-icons/fa6';
 
 
 const RegisterForm = () => {
+  const {products} = useContext(myContext)
   const [isShopByAnimeHovered, setIsShopByAnimeHovered] = useState(false);
     const [isShopByProducts, setIsShopByProducts] = useState(false);
   const nav = useNavigate()
@@ -32,6 +33,7 @@ const RegisterForm = () => {
     confirmPassword,
     setConfirmPassword
   } = useContext(myContext);
+  
   const [usernameError, setUsernameError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -41,111 +43,126 @@ const RegisterForm = () => {
   const [popupMessage, setPopupMessage] = useState('');
 
   const submitForm = async () => {
-    try {
-      const validRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+  try {
+    const validRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
 
-      if (!username) {
-        setUsernameError("Name can't be blank");
-        setTimeout(() => {
-          setUsernameError('');
-        }, 2000); // hide error after 2 seconds
-      } else {
+    if (!username) {
+      setUsernameError("Name can't be blank");
+      setTimeout(() => {
         setUsernameError('');
-      }
+      }, 2000); // hide error after 2 seconds
+    } else {
+      setUsernameError('');
+    }
 
-      if (!email) {
-        setEmailError("Email can't be blank");
+    if (!email) {
+      setEmailError("Email can't be blank");
+      setTimeout(() => {
+        setEmailError('');
+      }, 2000); // hide error after 2 seconds
+    } else if (!email.match(validRegex)) {
+      setEmailError("Invalid email address");
+      setTimeout(() => {
+        setEmailError('');
+      }, 2000); // hide error after 2 seconds
+    } else {
+      setEmailError('');
+    }
+
+    if (!password) {
+      setPasswordError("Password can't be blank");
+      setTimeout(() => {
+        setPasswordError('');
+      }, 2000); // hide error after 2 seconds
+    }
+    if (!confirmPassword) {
+      setConfirmPasswordError("Confirm Password can't be blank");
+      setTimeout(() => {
+        setConfirmPasswordError('');
+      }, 2000); // hide error after 2 seconds
+    } else if (password.length < 6) {
+      setPasswordError("Password must be at least 6 characters long.");
+      setTimeout(() => {
+        setPasswordError('');
+      }, 2000); // hide error after 2 seconds
+    } else if (!/[A-Z]/.test(password)) {
+      setPasswordError("Password must contain at least one uppercase letter");
+      setTimeout(() => {
+        setPasswordError('');
+      }, 2000); // hide error after 2 seconds
+    } else if (!/[a-z]/.test(password)) {
+      setPasswordError("Password must contain at least one lowercase letter");
+      setTimeout(() => {
+        setPasswordError('');
+      }, 2000); // hide error after 2 seconds
+    } else if (!/\d/.test(password)) {
+      setPasswordError("Password must contain at least one digit");
+      setTimeout(() => {
+        setPasswordError('');
+      }, 2000); // hide error after 2 seconds
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      setPasswordError("Password must contain at least one special character");
+      setTimeout(() => {
+        setPasswordError('');
+      }, 2000); // hide error after 2 seconds
+    } else {
+      if (password !== confirmPassword) {
+        setConfirmPasswordError("Passwords do not match");
         setTimeout(() => {
-          setEmailError('');
-        }, 2000); // hide error after 2 seconds
-      } else if (!email.match(validRegex)) {
-        setEmailError("Invalid email address");
-        setTimeout(() => {
-          setEmailError('');
+          setConfirmPasswordError('');
         }, 2000); // hide error after 2 seconds
       } else {
-        setEmailError('');
-      }
+        setConfirmPasswordError('');
+        const response = await axios.post('http://localhost:5000/Users/users', { username, email, password, confirmPassword });
 
-      if (!password) {
-        setPasswordError("Password can't be blank");
-        setTimeout(() => {
-          setPasswordError('');
-        }, 2000); // hide error after 2 seconds
-      }
-      if (!confirmPassword) {
-        setConfirmPasswordError("Confirm Password can't be blank");
-        setTimeout(() => {
-          setConfirmPasswordError('');
-        }, 2000); // hide error after 2 seconds
-      }
-      else if (password.length < 6) {
-        setPasswordError("Password must be at least 6 characters long.");
-        setTimeout(() => {
-          setPasswordError('');
-        }, 2000); // hide error after 2 seconds
-      } else if (!/[A-Z]/.test(password)) {
-        setPasswordError("Password must contain at least one uppercase letter");
-        setTimeout(() => {
-          setPasswordError('');
-        }, 2000); // hide error after 2 seconds
-      } else if (!/[a-z]/.test(password)) {
-        setPasswordError("Password must contain at least one lowercase letter");
-        setTimeout(() => {
-          setPasswordError('');
-        }, 2000); // hide error after 2 seconds
-      } else if (!/\d/.test(password)) {
-        setPasswordError("Password must contain at least one digit");
-        setTimeout(() => {
-          setPasswordError('');
-        }, 2000); // hide error after 2 seconds
-      } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-        setPasswordError("Password must contain at least one special character");
-        setTimeout(() => {
-          setPasswordError('');
-        }, 2000); // hide error after 2 seconds
-      }
-      else {
-        if (password !== confirmPassword) {
-          setConfirmPasswordError("Passwords do not match");
+        if (response.status === 201) {
+          setPopupMessage("Registration success");
           setTimeout(() => {
-            setConfirmPasswordError('');
+            setPopupMessage('');
+            setShowPopup('');
+            nav('/Login');
           }, 2000); // hide error after 2 seconds
-        }
-        else {
-          setConfirmPasswordError('');
-
-          const response = await axios.post('http://localhost:5000/Users/users', { username, email, password, confirmPassword });
-
-          if (response.status === 201) {
-            setPopupMessage("Registration success");
-            setTimeout(() => {
-              setPopupMessage('');
-              setShowPopup('')
-              nav('/')
-            }, 2000); // hide error after 2 seconds
-            setShowPopup(true);
-            
-          } else {
-            setPopupMessage("Registration failed");
-            setShowPopup(true);
-          }
-
+          setShowPopup(true);
+        } else {
+          setPopupMessage("Registration failed");
+          setShowPopup(true);
         }
       }
+    }
+  } 
+ catch (error) {
+  console.log(error);
+  if (error.response && error.response.data) {
+    if (error.response.data.message.includes('username')) {
+      setPopupMessage("Username already exists");
+    } else if (error.response.data.message.includes('email')) {
+      setPopupMessage("Email already exists");
+    } else {
+      setPopupMessage("Registration failed");
+    }
+    setShowPopup(true);
 
-    }
-    catch (error) {
-      console.log(error);
-      setPopupMessage("Error: " + error.message);
-      setShowPopup(true);
-    }
-  };
+    // Hide error message after 2 seconds
+    setTimeout(() => {
+      setShowPopup(false);
+    }, 2000);
+  } else {
+    setPopupMessage("Error: " + error.message);
+    setShowPopup(true);
+
+    // Hide error message after 2 seconds
+    setTimeout(() => {
+      setShowPopup(false);
+    }, 2000);
+  }
+}
+};
+
 
   const heading1 = 'NOW ENJOY ALL INDIA FREE SHIPPING ON EVERY ORDER'; // First heading text
   const heading2 = 'EXTRA 5% DISCOUNT FOR ALL ONLINE PAYMENTS'; // Second heading text
   const interval = 3000; // Interval between heading changes (in milliseconds)
-
+  const category=[...new Set(products.map(data=>data.category))]
   return (
     <div className="main1R">
       {/* Header code */}
@@ -158,7 +175,7 @@ const RegisterForm = () => {
 <div className="header02H">
     <div className="headerLeft1H">
         <div style={{ fontSize: '16px', paddingLeft: '100px' }} >
-        <img src={myVideo} alt='ZORO' height={65} width={65} />
+        <Link to={('/')}><img src={myVideo} alt='ZORO' height={65} width={65} /></Link>
         </div>
         <Navbar expand="lg" variant="dark" style={{ width: '100%', height: '100%' }}>
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
@@ -185,8 +202,8 @@ const RegisterForm = () => {
                                         {isShopByAnimeHovered && <DropdownBox onMouseEnter={() => setIsShopByAnimeHovered(true)} onMouseLeave={() => setIsShopByAnimeHovered(false)} />} {/* Render dropdown if hovered */}
                                     </Nav.Link>
 
-                    <Nav.Link><p className="headerTitles1H">COMBO</p></Nav.Link>
-                    <Nav.Link><p className="headerTitles1H">NEW LAUNCH</p></Nav.Link>
+                    <Nav.Link onClick={()=>nav(`/ProductsDisplay/${category[3]}`)}><p className="headerTitles1H">COMBO</p></Nav.Link>
+                    <Nav.Link onClick={()=>nav('/NewLaunch')}><p className="headerTitles1H">NEW LAUNCH</p></Nav.Link>
                 </Nav>
             </Navbar.Collapse>
         </Navbar>
@@ -199,8 +216,8 @@ const RegisterForm = () => {
                 <Nav className="mr-auto" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "5px" }}
                 >
                     <PopOverSearchButton />
-                    <Nav.Link><IoMdHeartEmpty className="headerRightIcons1H" /></Nav.Link>
-                    <Nav.Link><IoCartOutline className="headerRightIcons1H" /></Nav.Link>
+                    <Nav.Link onClick={()=>nav('/Wishlist')}><IoMdHeartEmpty className="headerRightIcons1H" /></Nav.Link>
+                    <Nav.Link onClick={()=>nav('/cart/:productId')}><IoCartOutline className="headerRightIcons1H" /></Nav.Link>
                     <DropDown/>
                 </Nav>
             </Navbar.Collapse>
@@ -296,11 +313,12 @@ const RegisterForm = () => {
       {/*  */}
 
       <div style={{height:'100%',width:'100%'}}>
-                    <Image height="100%" width="100%" src='https://otakukulture.in/wp-content/uploads/2023/09/Footer_HD_-e1674635998929.png'></Image> 
+        <hr />
+                    {/* <Image height="100%" width="100%" src='https://otakukulture.in/wp-content/uploads/2023/09/Footer_HD_-e1674635998929.png'></Image>  */}
             </div>
-            <div className="footer1H">
+            <div className="footer1H" style={{paddingTop:'100px'}}>
 
-                <div className="footer1aH">
+                <div className="footer1aH" style={{backgroundColor:'black'}}>
                     <div className="leftFooter1H">
                         <div><h4 class="h4" style={{ fontWeight: 'bold', marginLeft: '30px' }}>LOCATION</h4></div>
 

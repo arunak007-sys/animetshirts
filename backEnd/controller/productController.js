@@ -18,8 +18,8 @@ const getAllProducts = async (req,res) => {
 
 const addProduct = async (req,res) => {
     try {
-        const {name,price,description,image,category,anime,qty,size} = req.body
-        const postProd = new Product({name,price,description,image,category,anime,qty,size});
+        const {name,price,description,image,category,anime,qty,size,stock} = req.body
+        const postProd = new Product({name,price,description,image,category,anime,qty,size,stock});
         await postProd.save()
         // console.log(postProd)
         res.json("Product added successfully")
@@ -32,9 +32,9 @@ const addProduct = async (req,res) => {
 
 const editProduct = async (req,res) => {
     try{
-        const {name,price,description,image,category,anime,qty,size} = req.body
+        const {name,price,description,image,category,anime,qty,size,stock} = req.body
         const {id} = req.params
-        const editProd = await Product.findByIdAndUpdate(id,{name,price,description,image,category,anime,qty,size},{new:true})
+        const editProd = await Product.findByIdAndUpdate(id,{name,price,description,image,category,anime,qty,size,stock},{new:true})
         console.log(editProd)
         res.json(editProd)
     }
@@ -57,6 +57,26 @@ const deleteProduct = async (req,res) => {
     }
 
 }
+
+const updateProductStock = async (req, res) => {
+    const { id } = req.params;
+    const { products } = req.body;
+
+    try {
+        // Update each product's stock in the database
+        await Promise.all(
+            products.map(async (product) => {
+                const { _id, stock } = product;
+                await Product.findByIdAndUpdate(_id, { stock }, { new: true });
+            })
+        );
+
+        res.status(200).json({ message: 'Product stock updated successfully' });
+    } catch (error) {
+        console.log('Error updating product stock:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
 
 // ADD TO CART
 
@@ -83,36 +103,27 @@ const deleteProduct = async (req,res) => {
 
 // SEARCH
 
-// const handleSearch = async (req,res) => {
-//     try{
-//         const searchTerm = req.query.q
-//         const searchCriteria = req.query.criteria
-//         let query = {}
-//         if(searchCriteria === 'name'){
-//             query = {name: { $regex: searchTerm, $options: 'i' }}
-//         }
-//         else if(searchCriteria === 'price'){
-//             query = {price: searchTerm }
-//         }
-//         else if(searchCriteria === 'category'){
-//             query = {category: { $regex: searchTerm, $options: 'i' }}
-//         }
-//         else if(searchCriteria === 'anime'){
-//             query = {anime: { $regex: searchTerm, $options: 'i' }}
-//         }
-//         else{
-//             return res.status(400).json({ error : 'Invalid search criteria'})
-//         }
+const handleSearch = async (req, res) => {
+    try {
+        const searchTerm = req.query.q;
+        
+        const products = await Product.find({
+            $or: [
+                { name: { $regex: searchTerm, $options: 'i' } },
+                { category: { $regex: searchTerm, $options: 'i' } },
+                { anime: { $regex: searchTerm, $options: 'i' } }
+            ]
+        });
+        
+        res.json(products);
+        console.log(products);
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
 
-//         const products = await Product.find(query)
-//         res.json(products)
-//     }
-//     catch (err) {
-//         console.log(err)
-//         res.status(500).json({error: 'Internal server error' })
-//     }
-    
-// }
+
 
 // PRODUCT CATEGORY
 const getProductCategory = async (req,res) => {
@@ -241,7 +252,7 @@ const getSpecificProduct = async (req,res) => {
 module.exports = {getAllProducts,addProduct,editProduct,deleteProduct,
     getProductCategory,addProductCategory,editProductCategory,deleteProductCategory,
     getProductCategoryTrends,addProductCategoryTrends,editProductCategoryTrends,deleteProductCategoryTrends,
-    getSpecificProduct
+    getSpecificProduct,handleSearch,updateProductStock
     // addToCart
 
 }

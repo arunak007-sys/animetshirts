@@ -7,7 +7,9 @@ router.get('/products',productController.getAllProducts)
 router.put('/products/:id',productController.editProduct)
 router.delete('/products/:id',productController.deleteProduct)
 router.get('/products/:id',productController.getSpecificProduct)
+router.put('/updateStock/:id',productController.updateProductStock)
 
+router.get('/searchProducts',productController.handleSearch)
 // router.post('/cart',productController.addToCart)
 
 router.get('/category',productController.getProductCategory)

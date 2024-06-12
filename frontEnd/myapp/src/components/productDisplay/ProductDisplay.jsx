@@ -15,7 +15,7 @@ import { FaAngleDown, FaRegHeart } from 'react-icons/fa6';
 import axios from 'axios'
 
 const ProductDisplay = () => {
-    const {  cart, setCart, wishlist, setWishlist} = useContext(myContext)
+    const {  cart, setCart, wishlist, setWishlist,products,setProducts} = useContext(myContext)
     const heading1 = 'NOW ENJOY ALL INDIA FREE SHIPPING ON EVERY ORDER'; // First heading text
     const heading2 = 'EXTRA 5% DISCOUNT FOR ALL ONLINE PAYMENTS'; // Second heading text
     const interval = 3000; // Interval between heading changes (in milliseconds)
@@ -25,6 +25,7 @@ const ProductDisplay = () => {
     const nav = useNavigate()
     // const [color,setColor] = useState('')
     const [size, setSize] = useState('S')
+    const [shoeSize,setShoeSize] = useState('UK 6')
     const { productId } = useParams()
     const userID = localStorage.getItem("UserId")
     console.log("UserId", userID)
@@ -56,13 +57,12 @@ const ProductDisplay = () => {
     }, [])
     console.log("Product Display Now", displayProducts)
     const displayProduct = async () => {
-
         const response = await axios.get(`http://localhost:5000/Product/products/${productId}`)
         setDisplayProducts(response.data);
     }
 
-    const addToCart = async (prod, id,sizee) => {
-        console.log("Product:", prod);
+    const addToCart = async (prod, id, sizee) => {
+
         try {
             if (token) {
                 const isProductInCart = cart.find(item => item._id === id && item.size === sizee);
@@ -77,22 +77,54 @@ const ProductDisplay = () => {
                         image: prod.image,
                         qty: prod.qty,
                         size
-                    });
+                    },
+                    
+                    {headers : {
+                            'Authorization' : `Bearer ${token}`
+                        }}
+                    );
                     console.log("response", response);
                     setCart(response.data.user.cart);
                 }
+                // Find the specific product within the products array
+            const updatedProducts = products.map((item) => {
+                if (item._id === id) {
+                    // Check if the product size matches the specified size
+                    if (item.stock && item.stock[size] > 0) {
+                        const updatedStock = { ...item.stock }; // Create a copy of the stock object
+                        updatedStock[size] = Math.max(0, updatedStock[size] - prod.qty); // Decrement the stock for the specified size, ensuring it doesn't go below zero
+    
+                        return {
+                            ...item,
+                            stock: updatedStock,
+                        };
+                    }
+                }
+                return item; // Return unchanged if it's not the product or size we're updating
+            });
+    
+            // Update product stock in the database
+            await axios.put(`http://localhost:5000/Product/updateStock/${id}`, { products: updatedProducts });
+    
+            // Update local products state after successful stock decrement
+            setProducts(updatedProducts);
             } else {
                 alert("Sign in first");
                 nav('/Login');
             }
         } catch (err) {
-            if (err.response && err.response.data && err.response.data.message === "already added") {
+            if (err.response.status === 401) {
+                // Unauthorized - invalid token or token not provided
+                alert("Unauthorized - Please sign in again");
+                // Redirect to login page or perform any other action as needed
+                nav('/Login');
+            } else if (err.response && err.response.data && err.response.data.message === "already added") {
                 alert("Product already exists in cart");
             } else {
                 console.log(err, "Product id not found");
             }
-        }
     };
+    }
 
 
     // console.log("newcart", cart);
@@ -146,7 +178,7 @@ const ProductDisplay = () => {
             if (token) {
                 const isProductInCart = cart.find(item => item._id === id && item._size === sizee) ;
                 if (isProductInCart) {
-                    nav('/cart/:productId')
+                    nav('/BuyNow')
                 } else {
                     const response = await axios.put(`http://localhost:5000/Users/cart`, {
                         id: prod._id,
@@ -156,10 +188,15 @@ const ProductDisplay = () => {
                         image: prod.image,
                         qty: prod.qty,
                         size
-                    });
+                    },
+                    {
+                        headers : {
+                            'Authorization' : `Bearer ${token}`
+                        }}
+                );
                     console.log("response", response);
                     setCart(response.data.user.cart);
-                    nav('/cart/:productId')
+                    nav('/BuyNow')
                 }
             } else {
                 alert("Sign in first");
@@ -168,45 +205,46 @@ const ProductDisplay = () => {
         } catch (err) {
             if (err.response && err.response.data && err.response.data.message === "already added") {
                 // alert("Product already exists in cart");
-                nav('/cart/:productId')
+                nav('/BuyNow')
             } else {
                 console.log(err, "Product id not found");
             }
         }
     };
 
-    const increementQty = async (id) => {
+    const increementQty = async (id,sizee) => {
         // console.log("first",id)
         try {
+            
             const newQty = 
-            displayProducts._id === id ? { ...displayProducts, qty: displayProducts.qty + 1 } : displayProducts
+            displayProducts._id === id && displayProducts.size === sizee ? { ...displayProducts, qty: displayProducts.qty + 1 } : displayProducts
             
             setDisplayProducts(newQty)
             axios.put(`http://localhost:5000/Users/cart/${id}`, { userID, cart: newQty })
-            // console.log("cart", cart)
             console.log("Display",displayProducts)
-            // cart.map((data) => {
-            //     if(data.qty > 7){
-            //         alert("Quantity exceeded")
-            // }
-            // else {
-                
-            //     const newQty = displayProducts.map((item) =>
-
-            //     item.id === id ? { ...item, qty: item.qty + 1 } : item
-            // )
-            // setDisplayProducts(newQty)
-
-            
-
-        //     }
-        // })
+            // Decrement product stock for the corresponding size
         }
         catch (err) {
             console.log(err)
         }
     }
 
+    const decreementQty = async (id,sizee) => {
+        // console.log("first",id)
+        try {
+            const newQty = 
+            displayProducts._id === id && displayProducts.size === sizee ? { ...displayProducts, qty: displayProducts.qty - 1 } : displayProducts
+            
+            setDisplayProducts(newQty)
+            axios.put(`http://localhost:5000/Users/cart/${id}`, { userID, cart: newQty })
+            console.log("Display",displayProducts)
+        }
+        catch (err) {
+            console.log(err)
+        }
+    }
+
+    const category=[...new Set(products.map(data=>data.category))]
     return (
         <div className="main1H">
 
@@ -219,7 +257,7 @@ const ProductDisplay = () => {
                 <div className="header02H">
                     <div className="headerLeft1H">
                         <div style={{ fontSize: '16px', paddingLeft: '100px' }} >
-                            <img src={myVideo} alt='ZORO' height={65} width={65} />
+                        <Link to={('/')}><img src={myVideo} alt='ZORO' height={65} width={65} /></Link>
                         </div>
                         <Navbar expand="lg" variant="dark" style={{ width: '100%', height: '100%' }}>
                             <Navbar.Toggle aria-controls="basic-navbar-nav" />
@@ -247,8 +285,8 @@ const ProductDisplay = () => {
                                         {isShopByAnimeHovered && <DropdownBox onMouseEnter={() => setIsShopByAnimeHovered(true)} onMouseLeave={() => setIsShopByAnimeHovered(false)} />} {/* Render dropdown if hovered */}
                                     </Nav.Link>
 
-                                    <Nav.Link><p className="headerTitles1H">COMBO</p></Nav.Link>
-                                    <Nav.Link><p className="headerTitles1H">NEW LAUNCH</p></Nav.Link>
+                                    <Nav.Link onClick={()=>nav(`/ProductsDisplay/${category[3]}`)}><p className="headerTitles1H">COMBO</p></Nav.Link>
+                                    <Nav.Link onClick={()=>nav('/NewLaunch')}><p className="headerTitles1H">NEW LAUNCH</p></Nav.Link>
                                 </Nav>
                             </Navbar.Collapse>
                         </Navbar>
@@ -297,17 +335,8 @@ const ProductDisplay = () => {
                                 <div className="sizes" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
                                     <div style={{ display: 'flex', flexDirection: 'row' }}><p style={{ color: 'black', fontSize: '12px', display: 'flex', flexDirection: 'row' }}>SIZE :
                                         <p style={{ fontWeight: 'bold' }}> {size}</p></p> <p style={{ color: 'black', fontSize: '12px', marginLeft: '100px' }}>SZE CHART</p></div>
-                                    {/* <div>
-                                            <button className="BtnProd" onClick={()=>setSize('S')} style={{backgroundColor: size.includes('S') ? 'orange' : 'red'}}>S </button>
-                                            <button className="BtnProd" onClick={()=>setSize('M')} style={{ marginLeft: '20px',backgroundColor: size.includes('M') ? 'orange' : 'red' }}>M</button>
-                                            <button className="BtnProd" onClick={()=>setSize('X')} style={{ marginLeft: '20px',backgroundColor: size.includes('X') ? 'orange' : 'red' }}>X</button>
-                                            <button className="BtnProd" onClick={()=>setSize('XL')} style={{ marginLeft: '20px',backgroundColor: size.includes('XL') ? 'orange' : 'red' }}>XL</button>
-                                            <button className="BtnProd" onClick={()=>setSize('XLL')} 
-                                            style={{ marginLeft: '20px',backgroundColor: size.includes('XLL') ? 'orange' : 'red' }}
-                                            // style={{marginLeft:"20px",backgroundColor:'red'}}
-                                            >XLL</button>
-                                        </div> */}
-                                    <div>
+                                            
+                                            <div>
                                         <button
                                             className="BtnProd"
                                             onClick={() => setSize('S')}
@@ -345,6 +374,9 @@ const ProductDisplay = () => {
                                         </button>
                                     </div>
 
+                                       
+                                    
+
                                 </div>
 
 
@@ -359,9 +391,9 @@ const ProductDisplay = () => {
 
                             <div style={{ display: 'flex', flexDirection: 'column', marginTop: '20px', justifyContent: 'center', alignItems: 'center' }}>
                                 <div style={{ display: 'flex', flexDirection: 'row' }}><div style={{ height: '40px', width: '90px', border: '1px solid', display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-                                    <button style={{ height: '34px', width: '30px', background: 'white', borderColor: 'white', fontSize: '20px', border: 'white' }}>-</button>
+                                    <button style={{ height: '34px', width: '30px', background: 'white', borderColor: 'white', fontSize: '20px', border: 'white' }} onClick={() => displayProducts.qty > 1  ? decreementQty(displayProducts._id,displayProducts.size) : displayProducts}>-</button>
                                     <div style={{ height: '35px', width: '30px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>{displayProducts.qty}</div>
-                                    <button style={{ height: '34px', width: '30px', background: 'white', borderColor: 'white', fontSize: '20px', border: 'white' }}  onClick={() => displayProducts.qty < 8 ? increementQty(displayProducts._id) :displayProducts}>+</button>
+                                    <button style={{ height: '34px', width: '30px', background: 'white', borderColor: 'white', fontSize: '20px', border: 'white' }}  onClick={() => displayProducts.qty < 8 ? increementQty(displayProducts._id,displayProducts.size) :displayProducts}>+</button>
                                 </div>
                                     <Button onClick={() => addToCart(displayProducts, displayProducts._id,displayProducts.size)}
                                         style={{ marginLeft: '10px',
@@ -416,9 +448,9 @@ const ProductDisplay = () => {
             <div style={{ height: '100%', width: '100%' }}>
                 <Image height="100%" width="100%" src='https://otakukulture.in/wp-content/uploads/2023/09/Footer_HD_-e1674635998929.png' />
             </div>
-            <div className="footer1H">
+            <div className="footer1H" style={{paddingTop:'100px'}}>
 
-                <div className="footer1aH">
+                <div className="footer1aH" style={{backgroundColor:'black'}}>
                     <div className="leftFooter1H">
                         <div><h4 class="h4" style={{ fontWeight: 'bold', marginLeft: '30px' }}>LOCATION</h4></div>
 

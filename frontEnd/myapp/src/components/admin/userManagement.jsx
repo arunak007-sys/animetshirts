@@ -34,14 +34,36 @@ export default function UserManagement() {
         }
     }
 
-    function banUser(users){
-        if (window.confirm(`Are you want to ban this user, "${users.username}"?`)) {
-            setBanBtn(users)
+
+    const banUser = async (users) => {
+            if (window.confirm(`Are you want to ban this user, "${users.username}"?`)) {
+            banNow(users)
         }
     }
-    function unbanUser(users){
-        if (window.confirm(`Are you want to unban this user, "${users.username}"?`)) {
-            setBanBtn(null)
+
+    const banNow = async (users)=> {
+        try{
+        const response = await axios.post(`http://localhost:5000/Users/banUser`,{userId:users._id,banned:true})
+        window.location.reload();
+        }
+        catch (err) {
+            console.log(err)
+        }
+    }
+
+    const UnbanUser = async (users) => {
+        if (window.confirm(`Are you want to Unban this user, "${users.username}"?`)) {
+            unBanNow(users)
+        }
+    }
+
+    const unBanNow = async (users) => {
+        try{
+        const response = await axios.post(`http://localhost:5000/Users/banUser`,{userId:users._id,banned:false})
+        window.location.reload();
+        }
+        catch (err) {
+            console.log(err)
         }
     }
 
@@ -77,8 +99,8 @@ export default function UserManagement() {
                                 <td>{users.username}</td>
                                 <td>{users.email}</td>
                                 <td style={{display:'flex',justifyContent:'space-evenly'}}>
-                                    <button style={{borderRadius:'5px',width:'100px'}} onClick={()=>banUser(users)}>Ban</button>
-                                <button style={{borderRadius:'5px',width:'100px'}} onClick={()=>unbanUser(users)}>unBan</button>
+                                   { users.bannedUser != true ? <button style={{borderRadius:'5px',width:'100px'}} onClick={()=>banUser(users)}>Ban</button> :
+                                    <button style={{borderRadius:'5px',width:'100px'}} onClick={()=>UnbanUser(users)}>UnBan</button>}
                                 </td>
                                 <td><button style={{borderRadius:'5px',width:'100px'}} onClick={()=>confirmDelete(users._id,users.username)}>Delete</button></td>
                             </tr>

@@ -23,7 +23,6 @@ const productSchema = new mongoose.Schema({
     },
     anime : {
         type : String,
-        required : true,
     },
     qty : {
         type : Number,
@@ -32,6 +31,28 @@ const productSchema = new mongoose.Schema({
     size : {
         type : String,
         required : true,
+    },
+    stock:{
+        S:{
+            type:Number,
+            required : false
+        },
+        M:{
+            type:Number,
+            required : false
+        },
+        X:{
+            type:Number,
+            required:false,
+        },
+        XL:{
+            type:Number,
+            required:false,
+        },
+        XXL: {
+            type:Number,
+            required:false
+        }
     }
 })
 

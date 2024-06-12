@@ -1,26 +1,57 @@
-import React, { useContext, useState } from 'react';
-import { Navbar, Nav, Image } from 'react-bootstrap';
+import React, { useContext, useEffect, useState } from 'react';
+import { Navbar, Nav, Image, Button } from 'react-bootstrap';
 import { IoCartOutline } from 'react-icons/io5';
-import '../home/HomeCopy.css';
-import TwoHeadingsSlide from './TwoHeadingsSlide';
+import '../myOrders/MyOrders.css';
+import TwoHeadingsSlide from '../home/TwoHeadingsSlide';
 import { myContext } from '../context/Context';
-import PopOverSearchButton from './PopoverSearchButton';
+import PopOverSearchButton from '../home/PopoverSearchButton';
 import myVideo from '../home/ZORO.gif';
-import DropDown from './DropDown';
+import DropDown from '../home/DropDown';
 import { IoMdHeartEmpty } from "react-icons/io";
-import DropdownBox1 from './DropdownBox1';
-import DropdownBox from './DropdownBox';
-import { useNavigate } from 'react-router-dom';
+import DropdownBox1 from '../home/DropdownBox1';
+import DropdownBox from '../home/DropdownBox';
+import { Link, useNavigate } from 'react-router-dom';
 import { FaAngleDown } from 'react-icons/fa6';
+import { GiShoppingCart } from 'react-icons/gi';
+import axios from 'axios';
 
-const HomeCopy = () => {
-    const {  } = useContext(myContext)
+const MyOrders = () => {
+    const { myOrders,setMyOrders,products} = useContext(myContext)
     const heading1 = 'NOW ENJOY ALL INDIA FREE SHIPPING ON EVERY ORDER'; // First heading text
     const heading2 = 'EXTRA 5% DISCOUNT FOR ALL ONLINE PAYMENTS'; // Second heading text
     const interval = 3000; // Interval between heading changes (in milliseconds)
     const [isShopByAnimeHovered, setIsShopByAnimeHovered] = useState(false);
     const [isShopByProducts, setIsShopByProducts] = useState(false);
     const nav = useNavigate()
+    const userID = localStorage.getItem("UserId")
+    console.log("UserId", userID)
+    useEffect(()=>{
+        fetchmyOrders()
+    },[])
+    const fetchmyOrders = async () => {
+        try{
+            const response = await axios.post('http://localhost:5000/Users/getWishlist', {UserId: userID})
+            setMyOrders(response.data.myOrders) 
+        }
+        catch (err) {
+            console.log(err)
+        }
+    }
+    console.log("MYOrders",myOrders)
+    const cancelOrders = async (index) => {
+        try {
+            await axios.post(`http://localhost:5000/Users/deletemyOrders/${index}`, { userId:userID });
+            console.log("myOrders ID", userID);
+            fetchmyOrders();
+        } catch (error) {
+            console.error('Error removing myOrders item:', error);
+        }
+    };
+    console.log("response", myOrders)
+    const displayProduct = async (id) => {
+        nav(`/product/${id}`)
+    }
+    const category=[...new Set(products.map(data=>data.category))]
     return (
         <div className="main1H">
 
@@ -33,7 +64,7 @@ const HomeCopy = () => {
                 <div className="header02H">
                     <div className="headerLeft1H">
                         <div style={{ fontSize: '16px', paddingLeft: '100px' }} >
-                        <img src={myVideo} alt='ZORO' height={65} width={65} />
+                        <Link to={('/')}><img src={myVideo} alt='ZORO' height={65} width={65} /></Link>
                         </div>
                         <Navbar expand="lg" variant="dark" style={{ width: '100%', height: '100%' }}>
                             <Navbar.Toggle aria-controls="basic-navbar-nav" />
@@ -60,8 +91,8 @@ const HomeCopy = () => {
                                         {isShopByAnimeHovered && <DropdownBox onMouseEnter={() => setIsShopByAnimeHovered(true)} onMouseLeave={() => setIsShopByAnimeHovered(false)} />} {/* Render dropdown if hovered */}
                                     </Nav.Link>
 
-                                    <Nav.Link><p className="headerTitles1H">COMBO</p></Nav.Link>
-                                    <Nav.Link><p className="headerTitles1H">NEW LAUNCH</p></Nav.Link>
+                                    <Nav.Link onClick={()=>nav(`/ProductsDisplay/${category[3]}`)}><p className="headerTitles1H">COMBO</p></Nav.Link>
+                                    <Nav.Link onClick={()=>nav('/NewLaunch')}><p className="headerTitles1H">NEW LAUNCH</p></Nav.Link>
                                 </Nav>
                             </Navbar.Collapse>
                         </Navbar>
@@ -74,8 +105,8 @@ const HomeCopy = () => {
                                 <Nav className="mr-auto" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "5px" }}
                                 >
                                     <PopOverSearchButton />
-                                    <Nav.Link><IoMdHeartEmpty className="headerRightIcons1H" /></Nav.Link>
-                                    <Nav.Link><IoCartOutline className="headerRightIcons1H" /></Nav.Link>
+                                    <Nav.Link onClick={()=>nav('/myOrders')}><IoMdHeartEmpty className="headerRightIcons1H" /></Nav.Link>
+                                    <Nav.Link onClick={()=>nav('/cart/:productId')}><IoCartOutline className="headerRightIcons1H" /></Nav.Link>
                                     <DropDown/>
                                 </Nav>
                             </Navbar.Collapse>
@@ -87,9 +118,54 @@ const HomeCopy = () => {
                 </div>
             </div>
 
-            <div className="center1H">
+            <div className="center1HWW">
+            
+            <div style={{display:'flex',justifyContent:'Left',alignItems:'Left',paddingLeft:'150px',marginTop:'30px'}} className='homeNaruto'>
+                    <Link to={'/'}><p>Home</p></Link> 
+                <p style={{marginLeft:'20px',marginRight:'20px'}}>/</p> <Link to={'/Naruto'}><p style={{fontWeight:'bold'}}>myOrders</p></Link></div>
 
+            <div className="emptyWish">
+                    
+                <div><h2 className='wishHeading'>myOrders</h2></div>
+                <div style={{display:'flex',flexDirection:'row',justifyContent:'left',width:'100%',alignItems:'left'}}>
+                    <p style={{fontWeight:'bold',fontSize:'14px',letterSpacing:'1px',marginLeft:'200px'}}>PRODUCT</p>
+                <p style={{fontWeight:'bold',marginLeft:'600px',fontSize:'14px',letterSpacing:'1px'}}>PRICE</p></div>
+                <hr style={{width:'1300px',color:'grey'}}/>
+                {
+                    myOrders.length === 0 ? 
+                    <div className='wishDescrip'><p>Orders list empty.</p></div> 
+                    
+                    :
+                    <div style={{display:'flex',width:'100%',flexDirection:'column',height:'auto'}}>
+                        {
+                            myOrders.map((wish,index) => (
+                                <div key={index} style={{display:'flex',alignItems:'center',justifyContent:'center',width:'100%',marginTop:'10px'}}>
+
+                                    <div style={{display:'flex',flexDirection:'row',alignItems:'center',width:'40%',marginLeft:"30px",paddingLeft:'100px'}}>
+                                    <div > <Link to={(`/ProductDisplay/${wish.id}`)}><img src={wish.image} height={150} width={120} alt="" /></Link></div>
+                                    <div style={{marginLeft:'40px',display:'flex',justifyContent:'center',alignItems:'center',flexDirection:'column'}}>
+                                        <p className='myOrdersName'>{wish.name}</p>
+                                        <div style={{display:'flex',flexDirection:'row',justifyContent:'center',alignItems:'center'}}>
+                                            <p style={{fontSize:'14px'}}>qty : {wish.qty}</p>
+                                    <p style={{fontSize:'12px',marginLeft:'10px'}}>SIZE : {wish.size}</p></div>
+                                        </div>
+                                    
+                                    </div>
+
+                                    <div style={{width:'30%',display:'flex'}}><p className='myOrdersPrice' style={{marginLeft:'250px'}}>Total Price : Rs. {wish.price*wish.qty}.00</p></div>
+
+                                    <div style={{display:'flex',flexDirection:'row',justifyContent:'center',alignItems:'center',width:'30%'}}>
+                                    {/* <div ><Button  variant='danger' style={{fontWeight:'bold',border:'none',fontSize:'14px',width:'160px',height:'40px'}} onClick={() => nav(`/ProductDisplay/${wish.id}`)}>VIEW PRODUCT</Button></div> */}
+                                    <div style={{marginLeft:'30px'}}><Button variant='danger' style={{fontWeight:'bold',width:'160px',height:'40px'}} onClick={()=>cancelOrders(index)}>cancel order</Button></div>
+                                    </div>
+                                </div>
+                                
+                            ))
+                        }
+                    </div>
+                }
                 
+                </div>
                 
             </div>
 
@@ -97,11 +173,11 @@ const HomeCopy = () => {
 
             
             <div style={{height:'100%',width:'100%'}}>
-                    <Image height="100%" width="100%" src='https://otakukulture.in/wp-content/uploads/2023/09/Footer_HD_-e1674635998929.png'></Image> 
+                    <hr />
             </div>
-            <div className="footer1H">
+            <div className="footer1H"  style={{paddingTop:'100px'}}>
 
-                <div className="footer1aH">
+                <div className="footer1aH" style={{backgroundColor:'black'}}>
                     <div className="leftFooter1H">
                         <div><h4 class="h4" style={{ fontWeight: 'bold', marginLeft: '30px' }}>LOCATION</h4></div>
 
@@ -137,4 +213,4 @@ const HomeCopy = () => {
     );
 };
 
-export default HomeCopy;
+export default MyOrders;
