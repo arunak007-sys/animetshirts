@@ -204,10 +204,6 @@ const handleStockXXLChange = (event) => {
         fetchProducts()
       }
 
-      function newR(){
-
-      }
-
     return (
 
         <div className="mainP1">
