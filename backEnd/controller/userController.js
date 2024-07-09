@@ -43,13 +43,12 @@ const editUserEmail = async (req, res) => {
 
 const userRegister = async (req, res) => {
     try {
-        const { username, email, password, confirmPassword } = req.body
+        const { username, email, password} = req.body
         const hashedPassword = await bcrypt.hash(password, 10)
-        const user = new User({ username, email, password: hashedPassword, confirmPassword })
+        const user = new User({ username, email, password: hashedPassword })
         await user.save()
         res.status(201).json("User registered successfully")
     } catch (error) {
-        // Send the actual error message received from the catch block
         res.status(400).json({ message: error.message || "Registration Failed" })
         console.log(error)
     }

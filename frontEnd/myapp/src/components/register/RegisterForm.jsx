@@ -113,7 +113,7 @@ const RegisterForm = () => {
         }, 2000); // hide error after 2 seconds
       } else {
         setConfirmPasswordError('');
-        const response = await axios.post('http://localhost:5000/Users/users', { username, email, password, confirmPassword });
+        const response = await axios.post('http://localhost:5000/Users/users', { username, email, password });
 
         if (response.status === 201) {
           setPopupMessage("Registration success");

@@ -58,10 +58,8 @@ const Login = () => {
         catch (error) {
 
             if (error.response && error.response.status === 403) {
-                // Handle banned user error specifically
                 alert("Your account has been banned. Please contact support.");
             } else {
-                // Handle other types of errors (e.g., invalid credentials)
                 alert("Invalid email or password");
             }
             console.log(error);
